@@ -56,7 +56,7 @@ class DefaultController extends Controller
 
             $constraints = array(
                 new Email(['message'=>'This is not the correct email format']),
-                new NotBlank(['message' => 'This field can not be blank'])
+                new NotBlank(['message' => 'Email field can not be blank'])
             );
 
             $errors_email = $validator->validate(
@@ -75,19 +75,28 @@ class DefaultController extends Controller
                 // para responder con objetos en formato JSON
                 return new JsonResponse($signup);
 
+            } elseif (count($errors_email) != 0) {
+                $data = array(
+                    "status" => "error",
+                    "code" => 400,
+                    "msg" => $errors_email[0]->getMessage()
+                );
             } else {
-                return $helpers->getjson(array(
-                   "status" => "error",
-                    "data" => $errors_email[0]->getMessage()
-                ));
+                $data = array(
+                    "status" => "error",
+                    "code" => 400,
+                    "msg" => "Password field can not be blank"
+                );
             }
 
         } else {
-            return $helpers->getjson(array(
+            $data = array(
                 "status" => "error",
-                "data" => "send json with post"
-            ));
+                "code" => 400,
+                "msg" => "send json with post"
+            );
         }
+        return $helpers->getjson($data);
     }
 
 }

@@ -58,4 +58,22 @@ class APIRestHelpers
 
         return $response;
     }
+
+    /**
+     * Genera identificador único para el usuario
+     *
+     * @return bool|string
+     */
+    public function uid() {
+        mt_srand((double)microtime()*1000000);
+        $token = mt_rand(1, mt_getrandmax());
+
+        $uid = uniqid(md5($token), true);
+        if($uid != false && $uid != '' && $uid != NULL) {
+            $out = sha1($uid);
+            return $out;
+        } else {
+            return false;
+        }
+    }
 }

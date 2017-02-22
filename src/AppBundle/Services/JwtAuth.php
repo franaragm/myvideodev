@@ -18,7 +18,8 @@ class JwtAuth
 
     /**
      * Autenticación de usuario
-     * devuelve los datos de usuario formato JSON o un token cifrado
+     * devuelve los datos de usuario en un objeto o un token cifrado
+     * en caso de error retorna array
      *
      * @param string $email
      * @param string $password
@@ -49,6 +50,7 @@ class JwtAuth
                 "email" => $user->getEmail(),
                 "name" => $user->getName(),
                 "surname" => $user->getSurname(),
+                "description" => $user->getDescription(),
                 "password" => $user->getPassword(),
                 "role" => $user->getRole(),
                 "userIdentifier" => $user->getUserIdentifier(),
@@ -63,7 +65,7 @@ class JwtAuth
             // codificar datos y generar un hash
             $jwt = JWT::encode($token, $key, 'HS256');
 
-            // decodifica datos
+            // decodifica datos y retorna objeto
             $decoded = JWT::decode($jwt, $key, array('HS256'));
 
             if($getHash != null){
@@ -73,7 +75,12 @@ class JwtAuth
             }
 
         } else {
-            return array("status" => "error", "data" => "Login failed !!");
+            $data = array(
+                "status" => "error",
+                "code" => 400,
+                "msg" => "Login failed !!"
+            );
+            return $data;
         }
 
     }
