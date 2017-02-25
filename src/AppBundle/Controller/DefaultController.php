@@ -66,10 +66,12 @@ class DefaultController extends Controller
 
             if (count($errors_email) == 0 && $password != null){
 
+                $pwd = hash('sha256', $password);
+
                 if ($getHash == null) {
-                    $signup = $jwt_auth->signup($email, $password);
+                    $signup = $jwt_auth->signup($email, $pwd);
                 } else {
-                    $signup = $jwt_auth->signup($email, $password, true);
+                    $signup = $jwt_auth->signup($email, $pwd, true);
                 }
 
                 // para responder con objetos en formato JSON

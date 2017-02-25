@@ -106,8 +106,22 @@ class JwtAuth
             return $auth;
         }
 
+        //comprueba si token se ha decodificado correctamente
         if (isset($decoded->sub)) {
-            $auth = true;
+
+            $user = $this->manager->getRepository('BackendBundle:User')
+                ->findOneBy(array(
+                    "id" => $decoded->sub
+                ));
+
+            // comprueba si el password del token coincide con el actual de la base de datos
+            // evita poder usar tokens de contraseñas antiguas
+            if ($user->getPassword() == $decoded->password) {
+                $auth = true;
+            } else {
+                $auth = false;
+            }
+
         } else {
             $auth = false;
         }

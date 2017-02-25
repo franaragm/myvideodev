@@ -10,14 +10,22 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class UserController extends Controller
 {
-    public function newUserAction(Request $request)
+
+    /**
+     * Crear un nuevo Usuario
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function createUserAction(Request $request)
     {
         $helpers = $this->get("app.apirest.helpers");
 
         $json = $request->get("json", null);
-        $params = json_decode($json);
 
         if ($json != null) {
+
+            $params = json_decode($json);
 
             $createdAt = new \DateTime("now");
             $active = 1;
@@ -53,7 +61,10 @@ class UserController extends Controller
                 $user->setActive($active);
                 $user->setUserIdentifier($userIdentifier);
                 $user->setEmail($email);
-                $user->setPassword($password);
+
+                $pwd = hash('sha256', $password);
+                $user->setPassword($pwd);
+
                 $user->setName($name);
                 $user->setSurname($surname);
                 $user->setDescription($description);
@@ -76,6 +87,7 @@ class UserController extends Controller
 
                         $data = array(
                             "status" => "success",
+                            "code" => 200,
                             "msg" => "New user created!!"
                         );
                         break;
@@ -114,6 +126,76 @@ class UserController extends Controller
                 "status" => "error",
                 "code" => 400,
                 "msg" => "User not created"
+            );
+        }
+
+        return $helpers->getjson($data);
+    }
+
+    /**
+     * Actualizar datos de perfil de usuario
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function updateUserAction(Request $request)
+    {
+        $helpers = $this->get("app.apirest.helpers");
+
+        $hash = $request->get("auth", null);
+
+        if ($hash != null) {
+            $authCheck = $helpers->authCheck($hash);
+        } else {
+            $authCheck = false;
+        }
+
+        $json = $request->get("json", null);
+
+        if ($json != null && $authCheck == true) {
+
+            $params = json_decode($json);
+
+            $imageProfile = null;
+            $imageBanner = null;
+            $password = (isset($params->password)) ? $params->password : null;
+            $name = (isset($params->name) && ctype_alpha($params->name)) ? $params->name : null;
+            $surname = (isset($params->surname) && ctype_alpha($params->surname)) ? $params->surname : null;
+            $description = (isset($params->description)) ? $params->description : null;
+
+            $identity = $helpers->authCheck($hash, true);
+            $em = $this->getDoctrine()->getManager();
+            $user_repo = $em->getRepository('BackendBundle:User');
+            $user = $user_repo->findOneBy(array(
+                "id" => $identity->sub
+            ));
+
+            $user->setImageProfile($imageProfile);
+            $user->setImageBanner($imageBanner);
+
+            if ($password != null) {
+                $pwd = hash('sha256', $password);
+                $user->setPassword($pwd);
+            }
+
+            $user->setName($name);
+            $user->setSurname($surname);
+            $user->setDescription($description);
+
+            $em->persist($user);
+            $em->flush();
+
+            $data = array(
+                "status" => "success",
+                "code" => 200,
+                "msg" => "Data Profile updated!!"
+            );
+
+        } else {
+            $data = array(
+                "status" => "error",
+                "code" => 400,
+                "msg" => "Auth or json error"
             );
         }
 

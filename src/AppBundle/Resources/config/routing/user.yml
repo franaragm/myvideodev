@@ -1,4 +1,9 @@
-user_new:
-    path: /new
-    defaults: { _controller: "AppBundle:User:newUser" }
+create_user:
+    path: /create
+    defaults: { _controller: "AppBundle:User:createUser" }
+    methods: POST
+
+update_user:
+    path: /update
+    defaults: { _controller: "AppBundle:User:updateUser" }
     methods: POST
