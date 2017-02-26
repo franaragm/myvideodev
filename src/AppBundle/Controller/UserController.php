@@ -202,4 +202,81 @@ class UserController extends Controller
         return $helpers->getjson($data);
     }
 
+    /**
+     * Carga de imagenes de perfil de usuario
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function uploadAction(Request $request)
+    {
+        $helpers = $this->get("app.apirest.helpers");
+        $hash = $request->get("auth", null);
+
+        if ($hash != null) {
+            $authCheck = $helpers->authCheck($hash);
+        } else {
+            $authCheck = false;
+        }
+
+        $data = array();
+
+        if ($authCheck) {
+            $identity = $helpers->authCheck($hash, true);
+
+            $em = $this->getDoctrine()->getManager();
+            $user_repo = $em->getRepository('BackendBundle:User');
+            $user = $user_repo->findOneBy(array(
+                "id" => $identity->sub
+            ));
+
+            // upload image files
+            $img_profile = $request->files->get("imageProfile");
+            $img_banner = $request->files->get("imageBanner");
+
+            $user_media_route = 'uploads/media/'.$user->getUserIdentifier().'_usermedia';
+
+            if (!empty($img_banner) && $img_banner != null) {
+                $ext = $img_banner->guessExtension(); // obtencion de extension
+                if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png') {
+                    $file_name = $user->getUserIdentifier().'_imgbanner_'.time().'.'.$ext;
+                    $img_banner->move($user_media_route, $file_name);
+
+                    $user->setImageBanner($file_name);
+                    $em->persist($user);
+                    $em->flush();
+
+                    $data[] = "Image Banner uploaded";
+                } else {
+                    $data[] = "Image Banner format not valid";
+                }
+            }
+
+            if (!empty($img_profile) && $img_profile != null) {
+                $ext = $img_profile->guessExtension(); // obtencion de extension
+                if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
+                    $file_name = $user->getUserIdentifier().'_imgprofile_'.time().'.'.$ext;
+                    $img_profile->move($user_media_route, $file_name);
+
+                    $user->setImageProfile($file_name);
+                    $em->persist($user);
+                    $em->flush();
+
+                    $data[] = "Image Profile uploaded";
+                } else {
+                    $data[] = "Image Profile format not valid";
+                }
+            }
+
+        } else {
+            $data[] = array(
+                "status" => "error",
+                "code" => 400,
+                "msg" => "Auth or json error"
+            );
+        }
+
+        return $helpers->getjson($data);
+    }
+
 }

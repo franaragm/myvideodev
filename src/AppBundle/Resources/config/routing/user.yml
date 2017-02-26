@@ -7,3 +7,8 @@ update_user:
     path: /update
     defaults: { _controller: "AppBundle:User:updateUser" }
     methods: POST
+
+upload_user:
+    path: /upload
+    defaults: { _controller: "AppBundle:User:upload" }
+    methods: POST
