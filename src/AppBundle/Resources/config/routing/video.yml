@@ -1,0 +1,9 @@
+new_video:
+    path: /new
+    defaults: { _controller: "AppBundle:Video:newVideo" }
+    methods: POST
+
+edit_video:
+    path: /edit/{identifier}
+    defaults: { _controller: "AppBundle:Video:editVideo" , identifier:null}
+    methods: POST

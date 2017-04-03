@@ -76,4 +76,24 @@ class APIRestHelpers
             return false;
         }
     }
+
+    /**
+     * Genera identificador único para el video
+     *
+     * @return bool|string
+     */
+    public function vid() {
+        mt_srand((double)microtime()*1000000);
+        $token = mt_rand(1, mt_getrandmax());
+        $letter = chr(65 + rand(0, 25));
+
+        $vid = uniqid(md5($token), true);
+        if($vid != false && $vid != '' && $vid != NULL) {
+            $vid .= $letter;
+            $out = sha1($vid);
+            return $out;
+        } else {
+            return false;
+        }
+    }
 }
