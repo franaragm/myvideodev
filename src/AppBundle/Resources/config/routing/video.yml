@@ -7,3 +7,8 @@ edit_video:
     path: /edit/{identifier}
     defaults: { _controller: "AppBundle:Video:editVideo" , identifier:null}
     methods: POST
+
+upload_video:
+    path: /upload/{identifier}
+    defaults: { _controller: "AppBundle:Video:upload" , identifier:null}
+    methods: POST

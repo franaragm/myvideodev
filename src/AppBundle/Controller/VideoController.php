@@ -6,8 +6,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use BackendBundle\Entity\User;
 use BackendBundle\Entity\Video;
-use Symfony\Component\Validator\Constraints\Email;
-use Symfony\Component\Validator\Constraints\NotBlank;
 
 class VideoController extends Controller
 {
@@ -103,7 +101,7 @@ class VideoController extends Controller
      * Editar Video
      *
      * @param Request $request
-     * @param $video_identifier
+     * @param $identifier
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function editVideoAction(Request $request, $identifier = null)
@@ -128,7 +126,7 @@ class VideoController extends Controller
             $updatedAt = new \DateTime('now');
             $videoImage = null;
             $videoSource = null;
-            $status = (isset($params->status)) ? $params->status : null;;
+            $status = (isset($params->status)) ? $params->status : null;
             $title = (isset($params->title)) ? $params->title : null;
             $description = (isset($params->description)) ? $params->description : null;
             $user_id = ($identity->sub != null) ? $identity->sub : null;
@@ -183,103 +181,14 @@ class VideoController extends Controller
         return $helpers->getjson($data);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
-     * Actualizar datos de perfil de usuario
+     * Carga de archivos para video
      *
      * @param Request $request
+     * @param $identifier
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function updateUserAction(Request $request)
-    {
-        $helpers = $this->get("app.apirest.helpers");
-
-        $hash = $request->get("auth", null);
-
-        if ($hash != null) {
-            $authCheck = $helpers->authCheck($hash);
-        } else {
-            $authCheck = false;
-        }
-
-        $json = $request->get("json", null);
-
-        if ($json != null && $authCheck == true) {
-
-            $params = json_decode($json);
-
-            $imageProfile = null;
-            $imageBanner = null;
-            $password = (isset($params->password)) ? $params->password : null;
-            $name = (isset($params->name) && ctype_alpha($params->name)) ? $params->name : null;
-            $surname = (isset($params->surname) && ctype_alpha($params->surname)) ? $params->surname : null;
-            $description = (isset($params->description)) ? $params->description : null;
-
-            $identity = $helpers->authCheck($hash, true);
-            $em = $this->getDoctrine()->getManager();
-            $user_repo = $em->getRepository('BackendBundle:User');
-            $user = $user_repo->findOneBy(array(
-                "id" => $identity->sub
-            ));
-
-            $user->setImageProfile($imageProfile);
-            $user->setImageBanner($imageBanner);
-
-            if ($password != null) {
-                $pwd = hash('sha256', $password);
-                $user->setPassword($pwd);
-            }
-
-            $user->setName($name);
-            $user->setSurname($surname);
-            $user->setDescription($description);
-
-            $em->persist($user);
-            $em->flush();
-
-            $data = array(
-                "status" => "success",
-                "code" => 200,
-                "msg" => "Data Profile updated!!"
-            );
-
-        } else {
-            $data = array(
-                "status" => "error",
-                "code" => 400,
-                "msg" => "Auth or json error"
-            );
-        }
-
-        return $helpers->getjson($data);
-    }
-
-    /**
-     * Carga de imagenes de perfil de usuario
-     *
-     * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    public function uploadAction(Request $request)
+    public function uploadAction(Request $request, $identifier = null)
     {
         $helpers = $this->get("app.apirest.helpers");
         $hash = $request->get("auth", null);
@@ -296,46 +205,48 @@ class VideoController extends Controller
             $identity = $helpers->authCheck($hash, true);
 
             $em = $this->getDoctrine()->getManager();
-            $user_repo = $em->getRepository('BackendBundle:User');
-            $user = $user_repo->findOneBy(array(
-                "id" => $identity->sub
+            $video_repo = $em->getRepository('BackendBundle:Video');
+            $video = $video_repo->findOneBy(array(
+                "videoIdentifier" => $identifier
             ));
 
-            // upload image files
-            $img_profile = $request->files->get("imageProfile");
-            $img_banner = $request->files->get("imageBanner");
+            $is_owner = (isset($identity->sub) && $identity->sub == $video->getUser()->getId()) ? true : false;
 
-            $user_media_route = 'uploads/media/'.$user->getUserIdentifier().'_usermedia';
+            // files
+            $video_source = $request->files->get("videoSource");
+            $video_image = $request->files->get("videoImage");
 
-            if (!empty($img_banner) && $img_banner != null) {
-                $ext = $img_banner->guessExtension(); // obtencion de extension
-                if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png') {
-                    $file_name = $user->getUserIdentifier().'_imgbanner_'.time().'.'.$ext;
-                    $img_banner->move($user_media_route, $file_name);
+            $user_media_route = 'uploads/media/'.$video->getUser()->getUserIdentifier().'_usermedia/videos';
 
-                    $user->setImageBanner($file_name);
-                    $em->persist($user);
+            if (!empty($video_source) && $video_source != null && $is_owner) {
+                $ext = $video_source->guessExtension(); // obtencion de extension
+                if ($ext == 'mp4') {
+                    $file_name = $video->getVideoIdentifier().'_vid_'.time().'.'.$ext;
+                    $video_source->move($user_media_route, $file_name);
+
+                    $video->setVideoSource($file_name);
+                    $em->persist($video);
                     $em->flush();
 
-                    $data[] = "Image Banner uploaded";
+                    $data[] = "Video uploaded";
                 } else {
-                    $data[] = "Image Banner format not valid";
+                    $data[] = "Video format not valid, only mp4";
                 }
             }
 
-            if (!empty($img_profile) && $img_profile != null) {
-                $ext = $img_profile->guessExtension(); // obtencion de extension
+            if (!empty($video_image) && $video_image != null && $is_owner) {
+                $ext = $video_image->guessExtension(); // obtencion de extension
                 if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
-                    $file_name = $user->getUserIdentifier().'_imgprofile_'.time().'.'.$ext;
-                    $img_profile->move($user_media_route, $file_name);
+                    $file_name = $video->getVideoIdentifier().'_imgvid_'.time().'.'.$ext;
+                    $video_image->move($user_media_route, $file_name);
 
-                    $user->setImageProfile($file_name);
-                    $em->persist($user);
+                    $video->setVideoImage($file_name);
+                    $em->persist($video);
                     $em->flush();
 
-                    $data[] = "Image Profile uploaded";
+                    $data[] = "Image for video uploaded";
                 } else {
-                    $data[] = "Image Profile format not valid";
+                    $data[] = "Image format not valid";
                 }
             }
 
