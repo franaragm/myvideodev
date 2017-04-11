@@ -261,4 +261,145 @@ class VideoController extends Controller
         return $helpers->getjson($data);
     }
 
+    /**
+     * Listado de videos
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function listVideoAction(Request $request)
+    {
+        $helpers = $this->get("app.apirest.helpers");
+
+        $em = $this->getDoctrine()->getManager();
+
+        $dql = "SELECT v FROM BackendBundle:Video v ORDER BY v.id DESC";
+        $query = $em->createQuery($dql);
+
+        $paginator = $this->get('knp_paginator');
+        $actual_page = $request->query->getInt('page', 1); // parametro request de paginacion y en que num de pagina empieza
+        $items_per_page = 5;
+        $pagination = $paginator->paginate(
+            $query,
+            $actual_page,
+            $items_per_page
+        );
+        $video_items_count = $pagination->getTotalItemCount();
+
+        $data = array(
+            "status" => "success",
+            "video_items_count" => $video_items_count,
+            "actual_page" => $actual_page,
+            "items_per_page" => $items_per_page,
+            "total_pages" => ceil($video_items_count / $items_per_page),
+            "data" => $pagination
+        );
+
+        return $helpers->getjson($data);
+    }
+
+    /**
+     * Videos recientes
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function lastsVideosAction(Request $request)
+    {
+        $helpers = $this->get("app.apirest.helpers");
+
+        $em = $this->getDoctrine()->getManager();
+
+        $dql = "SELECT v FROM BackendBundle:Video v ORDER BY v.createdAt DESC";
+        $query = $em->createQuery($dql)->setMaxResults(5);
+        $videos = $query->getResult();
+
+        $data = array(
+            "status" => "success",
+            "data" => $videos
+        );
+
+        return $helpers->getjson($data);
+    }
+
+    /**
+     * Video en detalle
+     *
+     * @param Request $request
+     * @param null $identifier
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function detailVideoAction(Request $request, $identifier = null)
+    {
+        $helpers = $this->get("app.apirest.helpers");
+
+        $em = $this->getDoctrine()->getManager();
+
+        $video_repo = $em->getRepository('BackendBundle:Video');
+        $video = $video_repo->findOneBy(array(
+            "videoIdentifier" => $identifier
+        ));
+
+        if ($video) {
+            $data = array(
+                "status" => "success",
+                "data" => $video
+            );
+        } else {
+            $data[] = array(
+                "status" => "error",
+                "code" => 400,
+                "msg" => "Video don't exists"
+            );
+        }
+
+        return $helpers->getjson($data);
+    }
+
+    /**
+     * Busqueda de video
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function searchAction(Request $request, $keyword = null)
+    {
+        $helpers = $this->get("app.apirest.helpers");
+
+        $em = $this->getDoctrine()->getManager();
+
+        if($keyword != null) {
+            $dql = "SELECT v FROM BackendBundle:Video v "
+            . "WHERE v.title LIKE :keyword OR v.description LIKE :keyword ORDER BY v.id DESC";
+            $query = $em->createQuery($dql)->setParameter("keyword", "%$keyword%");
+
+        } else {
+            $dql = "SELECT v FROM BackendBundle:Video v ORDER BY v.id DESC";
+            $query = $em->createQuery($dql);
+        }
+
+
+
+        $paginator = $this->get('knp_paginator');
+        $actual_page = $request->query->getInt('page', 1); // parametro request de paginacion y en que num de pagina empieza
+        $items_per_page = 5;
+        $pagination = $paginator->paginate(
+            $query,
+            $actual_page,
+            $items_per_page
+        );
+        $video_items_count = $pagination->getTotalItemCount();
+
+        $data = array(
+            "status" => "success",
+            "video_items_count" => $video_items_count,
+            "actual_page" => $actual_page,
+            "items_per_page" => $items_per_page,
+            "total_pages" => ceil($video_items_count / $items_per_page),
+            "data" => $pagination
+        );
+
+        return $helpers->getjson($data);
+    }
+
 }
