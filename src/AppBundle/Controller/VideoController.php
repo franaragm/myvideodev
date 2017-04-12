@@ -372,13 +372,10 @@ class VideoController extends Controller
             $dql = "SELECT v FROM BackendBundle:Video v "
             . "WHERE v.title LIKE :keyword OR v.description LIKE :keyword ORDER BY v.id DESC";
             $query = $em->createQuery($dql)->setParameter("keyword", "%$keyword%");
-
         } else {
             $dql = "SELECT v FROM BackendBundle:Video v ORDER BY v.id DESC";
             $query = $em->createQuery($dql);
         }
-
-
 
         $paginator = $this->get('knp_paginator');
         $actual_page = $request->query->getInt('page', 1); // parametro request de paginacion y en que num de pagina empieza
@@ -401,5 +398,5 @@ class VideoController extends Controller
 
         return $helpers->getjson($data);
     }
-
+    
 }

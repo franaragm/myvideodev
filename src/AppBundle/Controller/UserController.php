@@ -279,4 +279,61 @@ class UserController extends Controller
         return $helpers->getjson($data);
     }
 
+    /**
+     * Canal de usuario
+     *
+     * @param Request $request
+     * @param null $identifier
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function channelAction(Request $request, $identifier = null)
+    {
+        $helpers = $this->get("app.apirest.helpers");
+
+        $em = $this->getDoctrine()->getManager();
+
+        $user_repo = $em->getRepository('BackendBundle:User');
+        $user = $user_repo->findOneBy(array(
+            "userIdentifier" => $identifier
+        ));
+
+        if (count($user) == 1) {
+            $user_id = $user->getId();
+
+            $dql = "SELECT v FROM BackendBundle:Video v WHERE v.user = $user_id ORDER BY v.id DESC";
+            $query = $em->createQuery($dql);
+
+            $paginator = $this->get('knp_paginator');
+            $actual_page = $request->query->getInt('page', 1); // parametro request de paginacion y en que num de pagina empieza
+            $items_per_page = 5;
+            $pagination = $paginator->paginate(
+                $query,
+                $actual_page,
+                $items_per_page
+            );
+            $video_items_count = $pagination->getTotalItemCount();
+
+            $data = array(
+                "status" => "success",
+                "video_items_count" => $video_items_count,
+                "actual_page" => $actual_page,
+                "items_per_page" => $items_per_page,
+                "total_pages" => ceil($video_items_count / $items_per_page),
+                "data" => array(
+                    "videos" => $pagination,
+                    "user" => $user
+                )
+            );
+
+        } else {
+            $data[] = array(
+                "status" => "error",
+                "code" => 400,
+                "msg" => "User not exists"
+            );
+        }
+
+        return $helpers->getjson($data);
+    }
+
 }

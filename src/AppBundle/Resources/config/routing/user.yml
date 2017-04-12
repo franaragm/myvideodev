@@ -12,3 +12,8 @@ upload_user:
     path: /upload
     defaults: { _controller: "AppBundle:User:upload" }
     methods: POST
+
+channel_user:
+    path: /channel/{identifier}
+    defaults: { _controller: "AppBundle:User:channel", identifier:null }
+    methods: GET
