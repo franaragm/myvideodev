@@ -40,7 +40,7 @@ class VideoController extends Controller
             $videoImage = null;
             $videoSource = null;
             $videoIdentifier = $helpers->vid();
-            $status = (isset($params->status)) ? $params->status : null;;
+            $status = (isset($params->status)) ? $params->status : null;
             $title = (isset($params->title)) ? $params->title : null;
             $description = (isset($params->description)) ? $params->description : null;
             $user_id = ($identity->sub != null) ? $identity->sub : null;
@@ -398,5 +398,5 @@ class VideoController extends Controller
 
         return $helpers->getjson($data);
     }
-    
+
 }
