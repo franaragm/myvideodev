@@ -18,6 +18,18 @@ if (isset($_SERVER['HTTP_CLIENT_IP'])
     exit('You are not allowed to access this file. Check '.basename(__FILE__).' for more information.');
 }
 
+// Peticiones http desde cualquier dominio u origen
+header("Access-Control-Allow-Origin: *");
+// Permitir cabeceras en las peticiones
+header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
+// Métodos http que pueden hacer peticiones a esta API REST
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+header("Allow: GET, POST, OPTIONS, PUT, DELETE");
+$method = $_SERVER["REQUEST_METHOD"];
+if ($method == "OPTIONS") {
+    die();
+}
+
 /** @var \Composer\Autoload\ClassLoader $loader */
 $loader = require __DIR__.'/../app/autoload.php';
 Debug::enable();
