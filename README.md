@@ -17,7 +17,7 @@
 
 `$ php bin/console doctrine:schema:create`
 
-* Importar datos sql de prueba de app/Resources y zip uploads en /web
+* Importar datos sql de prueba de app/Resources
 
 ### Datos de acceso JSON
 
