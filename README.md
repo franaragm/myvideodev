@@ -19,11 +19,12 @@
 
 * Importar datos sql de prueba de app/Resources
 
-### Datos de acceso a un usuario
+### Datos de acceso JSON
 
-email: 
+`http://myvideo.dev/app_dev.php/login`
 
-password: 
+POST - json
+`{"email":"fran@aragon.com", "password":"fran123", "getHash":"true"}`
 
 ### Comandos útiles
 
